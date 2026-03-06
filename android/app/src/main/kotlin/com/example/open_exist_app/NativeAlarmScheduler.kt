@@ -36,15 +36,21 @@ object NativeAlarmScheduler {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Use setExactAndAllowWhileIdle for reliable delivery even in Doze mode
+        // Intent to show when user taps the alarm icon (required by AlarmClockInfo)
+        val showIntent = Intent(context, MainActivity::class.java)
+        val showPendingIntent = PendingIntent.getActivity(
+            context,
+            REQUEST_CODE_OFFSET + scheduleId,
+            showIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val alarmClockInfo = AlarmManager.AlarmClockInfo(dateTimeMillis, showPendingIntent)
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             // Android 12+ — check if we can schedule exact alarms
             if (alarmManager.canScheduleExactAlarms()) {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    dateTimeMillis,
-                    pendingIntent
-                )
+                alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
             } else {
                 // Fallback: use setAndAllowWhileIdle (less precise but works)
                 alarmManager.setAndAllowWhileIdle(
@@ -54,11 +60,7 @@ object NativeAlarmScheduler {
                 )
             }
         } else {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                dateTimeMillis,
-                pendingIntent
-            )
+            alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
         }
     }
 

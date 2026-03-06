@@ -46,10 +46,16 @@ class AppLaunchReceiver : BroadcastReceiver() {
             // Launch the app using applicationContext (works from background)
             val launchIntent = context.packageManager.getLaunchIntentForPackage(packageName)
             if (launchIntent != null) {
+                // These flags are crucial for bypassing Android 10+ background restrictions
+                // FLAG_ACTIVITY_NEW_TASK is required when launching from outside an Activity
+                // FLAG_ACTIVITY_CLEAR_TOP and RESET_TASK_IF_NEEDED ensure the app comes to foreground
                 launchIntent.addFlags(
                     Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
                 )
+                
                 context.startActivity(launchIntent)
                 launched = true
                 Log.d(TAG, "Successfully launched $packageName")
